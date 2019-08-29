@@ -74,15 +74,17 @@ class ModelMetaclass(type):
 			raise RuntimeError('Primary key not found.')
 		for k in mappings.keys():
 			attrs.pop(k)
-		escaped_fields = list(map(lambda f: '"%s"' % f, fields))
+		escaped_fields = list(map(lambda f: '%s' % f, fields))
 		attrs['__mappings__'] = mappings
 		attrs['__table__'] = tableName
 		attrs['__primary_key__'] = primaryKey
 		attrs['__fields__'] = fields
-		attrs['__select__'] = 'select "%s", %s from "%s"' % (primaryKey, ','.join(escaped_fields), tableName)
-		attrs['__insert__'] = 'insert into "%s" (%s, "%s") values (%s)' % (tableName, ','.join(escape_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
-		attrs['__update__'] = 'update "%s" set %s where "%s"=?' % (tableName, ','.join(map(lambda f: '"%s"=?' % (mappings.get(f).name or f), fields)), primayKey)
-		attrs['__delete__'] = 'delete from "%s" where "%s"=?' % (tableName, primaryKey)
+		attrs['__select__'] = 'select %s, %s from %s' % (primaryKey, ','.join(escaped_fields), tableName)
+		attrs['__insert__'] = 'insert into %s (%s, %s) values (%s)' % (tableName, ', '.join(escaped_fields), 
+			primaryKey, create_args_string(len(escaped_fields) + 1))
+		attrs['__update__'] = 'update %s set %s where %s=?' % (tableName, 
+			','.join(map(lambda f: '%s=?' % (mappings.get(f).name or f), fields)), primaryKey)
+		attrs['__delete__'] = 'delete from %s where %s=?' % (tableName, primaryKey)
 		return type.__new__(cls, name, bases, attrs)
 
 class Model(dict, metaclass=ModelMetaclass):
@@ -106,7 +108,7 @@ class Model(dict, metaclass=ModelMetaclass):
 		value = getattr(self, key, None)
 		if value is None:
 			field = self.__mappings__[key]
-			if field.defult is not None:
+			if field.default is not None:
 				value = field.default() if callable(field.default) else field.default
 				logging.debug('using default value for %s: %s' % (key, str(value)))
 				setattr(self, key, value)
@@ -191,7 +193,7 @@ class StringField(Field):
 		super().__init__(name, ddl, primary_key, default)
 
 class BooleanField(Field):
-	def __init__(self, name=None, default=None):
+	def __init__(self, name=None, default=False):
 		super().__init__(name, 'boolean', False, default)
 
 class IntegerField(Field):
