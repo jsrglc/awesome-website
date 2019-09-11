@@ -1,17 +1,17 @@
 import logging; logging.basicConfig(level=logging.INFO)
-import asyncio
+import asyncio, os, json, time
 from datetime import datetime
 from aiohttp import web
 from jinja2 import Environment, FileSystemLoader
 
-from config import configs
+#from config import configs
 
 import orm
 from coroweb import add_routes, add_static
 
 #from handlers import cookie2user, COOKIE_NAME
 
-def init_jinja2(add, **kw):
+def init_jinja2(app, **kw):
 	logging.info('init jinja2...')
 	options = dict(
 		autoescape = kw.get('autoescape', True),
@@ -25,7 +25,7 @@ def init_jinja2(add, **kw):
 	if path is None:
 		path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'templates')
 	logging.info('set jinja2 template path: %s' % path)
-	env = Enviroment(loader=FileSystemLoader(path), **options)
+	env = Environment(loader=FileSystemLoader(path), **options)
 	filters = kw.get('filters', None)
 	if filters is not None:
 		for name, f in filters.items():
@@ -96,7 +96,7 @@ async def response_factory(app, handler):  #把任何返回值封装成浏览器
 		if isinstance(r, tuple) and len(r) == 2:
 			t, m = r
 			if isinstance(t, int) and t>=100 and t<600:
-				return.Response(t, str(m))
+				return web.Response(t, str(m))
 		# default:
 		resp = web.Response(body=str(r).encode('utf-8'))
 		resp.content_type = 'text/plain;charset=utf-8'
@@ -117,9 +117,8 @@ def datetime_filter(t):
 	return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
 
 async def init(loop):
-	await orm.create_pool(loop=loop, **configs.db)
-	app = web.Application(loop=loop,
-		middlewares=[logger_factory, response_factory])
+#	await orm.create_pool(loop=loop, **configs.db)
+	app = web.Application(loop=loop,middlewares=[logger_factory, response_factory])
 	#, auth_factory])
 	init_jinja2(app, filters=dict(datetime=datetime_filter))
 	add_routes(app, 'handlers')
@@ -127,9 +126,6 @@ async def init(loop):
 	srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000)
 	logging.info('server started at http://127.0.0.1::9000...')
 	return srv
-
-async def index(request):
-	return web.Response(body=b'<h1>Awesome Website</h1>', content_type='text/html')
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(init(loop))
