@@ -59,7 +59,7 @@ def has_request_arg(fn):  #判断是否含有名叫'request'参数，且该参�
 		if name == 'request':
 			found = True
 			continue
-		if found and (param.kind != inspect.Parameter.VAR_POSITION and param.kind != inspect.Parameter.KEYWORD_ONLY and param.kind != inspect.Parameter.VAR_KEYWORD):
+		if found and (param.kind != inspect.Parameter.VAR_POSITIONAL and param.kind != inspect.Parameter.KEYWORD_ONLY and param.kind != inspect.Parameter.VAR_KEYWORD):
 			raise ValueError('request paramter must be the last named parameter in function: %s%s' % (fn.__name__, str(sig)))
 	return found
 
@@ -114,7 +114,7 @@ class RequestHandler(object):
 				for name in self._named_kw_args:
 					if name in kw:
 						copy[name] = kw[name]
-					kw = copy
+				kw = copy
 			for k, v in request.match_info.items():  #检查命名关键参数
 				if k in kw:
 					logging.warning('Duplicate arg name in named arg and kw args: %s' % k)
