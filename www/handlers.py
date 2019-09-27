@@ -5,7 +5,7 @@ from aiohttp import web
 
 from coroweb import get, post
 from models import User, Comment, Blog, next_id
-from apis import Page, APIError, APIValueError, APIResourceNotFoundError
+from apis import Page, APIError, APIValueError, APIResourceNotFoundError, APIPermissionError
 from config import configs
 
 COOKIE_NAME = 'awesession'
@@ -247,7 +247,7 @@ async def api_create_comment(id, request, *, content):
 @post('/api/comments/{id}/delete')
 async def api_delete_comment(id , request):
 	check_admin(request)
-	c = await Comment(id)
+	c = await Comment.find(id)
 	if c is None:
 		raise APIResourceNotFoundError('Comment')
 	await c.remove()
@@ -293,7 +293,7 @@ async def api_create_blog(request, *, name, summary, content):
 		raise APIValueError('summary', 'summary cannot be empty.')
 	if not content or not content.strip():
 		raise APIValueError('content', 'content cannot be empty.')
-	blog = Blog(user_id=request.__user__, user_name=request.__user__.name, user_image=request.__user__.image, name=name.strip(), summary=sumamry.strip(), content=content.strip())
+	blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name.strip(), summary=summary.strip(), content=content.strip())
 	await blog.save()
 	return blog
 

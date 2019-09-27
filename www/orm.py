@@ -142,7 +142,7 @@ class Model(dict, metaclass=ModelMetaclass):
 
 	@classmethod
 	async def findNumber(cls, selectField, where=None, args=None):
-		sql = ['select %s _num_ from "%s"' % (selectField, cls.__table__)]
+		sql = ['select %s _num_ from %s' % (selectField, cls.__table__)]
 		if where:
 			sql.append('where')
 			sql.append(where)
@@ -153,8 +153,8 @@ class Model(dict, metaclass=ModelMetaclass):
 
 	@classmethod
 	async def find(cls, pk):
-		rs = await select('%s where "%s"=?' (cls.__select__, cls.__primary_key__), [pk], 1)
-		if len(rs) ==0:
+		rs = await select('%s where %s = ?' % (cls.__select__, cls.__primary_key__), [pk], 1)
+		if len(rs) == 0:
 			return None
 		return cls(**rs[0])
 
